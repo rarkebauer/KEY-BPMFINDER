@@ -1,0 +1,5 @@
+PROCESS.ENV.REDIRECTURI = 'https://fnahhapjeaegjfmkfelamhfldmmfnklp.chromiumapp.org/success'
+
+PROCESS.ENV.CLIENTSECRET = '9997952fd89547bfaacb9719a85bac67'
+
+PROCESS.ENV.CLIENTID = '73ac904f2c7243148dd8686ea33f35b9'

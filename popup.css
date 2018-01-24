@@ -1,0 +1,14 @@
+body {
+  margin: 10px;
+  background-color: rgb(54, 178, 250);
+  font-family: sans-serif;
+}
+
+h1 {
+  font-size: 15px;
+  color: #000000;
+  text-align: center;
+}
+li {
+  justify-content: left;
+}

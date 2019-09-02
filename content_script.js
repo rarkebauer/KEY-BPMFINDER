@@ -59,12 +59,6 @@ function makeXhrRequest(method, url, token) {
         )
       }
     }
-    // xhr.onerror = function(){
-    //   reject(Error({
-    //     status: xhr.status,
-    //     statusText: xhr.statusText
-    //   }))
-    // }
     xhr.onerror = function(){
       reject(
         Error(

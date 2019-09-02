@@ -14,13 +14,22 @@ function addSongInfoToTitle (songDataArr) {
     'A♯/B♭',
     'B'
   ]
-  let keyArr = songDataArr.map(songDatum => songDatum.track.key)
-  let bpmArr = songDataArr.map(songDatum => songDatum.track.tempo)
-  let mode = songDataArr.map(songDatum => songDatum.track.mode)
+
+  let songInfo = {
+    key: [],
+    bpm: [],
+    mode: []
+  }
+
+  songDataArr.map((songDatum, index) => {
+    songInfo.key[index] = songDatum.track.key
+    songInfo.bpm[index] = songDatum.track.tempo
+    songInfo.mode[index] = songDatum.track.mode
+  });
 
   songTitlesArr.map((songTitle, index) => {
-    let keyMode = (mode[index] === 1) ? 'maj' : 'min'
-    return songTitle.append(` - ${pitchClass[keyArr[index]]} ${keyMode} & ${bpmArr[index].toFixed(0)} BPM`);
+    let keyMode = (songInfo.mode[index] === 1) ? 'maj' : 'min'
+    return songTitle.append(` - ${pitchClass[songInfo.key[index]]} ${keyMode} & ${songInfo.bpm[index].toFixed(0)} BPM`);
   });
 }
 
@@ -38,17 +47,35 @@ function makeXhrRequest(method, url, token) {
       if (xhr.status >= 200 && xhr.status < 300){
         return resolve(xhr.response);
       } else {
-        reject(Error({
-          status: xhr.status,
-          statusTextInElse: xhr.statusText
-        }))
+        reject(
+          Error(
+            JSON.stringify(
+              {
+                status: xhr.status,
+                statusTextInElse: xhr.statusText
+              }
+            )
+          )
+        )
       }
     }
+    // xhr.onerror = function(){
+    //   reject(Error({
+    //     status: xhr.status,
+    //     statusText: xhr.statusText
+    //   }))
+    // }
     xhr.onerror = function(){
-      reject(Error({
-        status: xhr.status,
-        statusText: xhr.statusText
-      }))
+      reject(
+        Error(
+          JSON.stringify(
+            {
+              status: xhr.status,
+              statusTextInElse: xhr.statusText
+            }
+          )
+        )
+      )
     }
     xhr.send()
   })
@@ -57,15 +84,18 @@ function makeXhrRequest(method, url, token) {
 
 function makeXhrRequestForAlbumOrPlaylist(pathname, token) {
   let albumId, requestUrl, userId, playlistId
-  if (pathname.indexOf('album') > -1){
-    albumId = pathname.slice(7) //gets rid of the /album/ in the pathname
+  
+  if (pathname.indexOf('album') > -1 && !pathname.includes('albums')){
+    albumId = pathname.slice(7) //grab albumId
     requestUrl = `https://api.spotify.com/v1/albums/${albumId}/tracks`
-  } if (pathname.indexOf('playlist') > -1){
-    userId = pathname.split('/')[2]
-    playlistId = pathname.split('/')[4]
-    requestUrl = `https://api.spotify.com/v1/users/${userId}/playlists/${playlistId}/tracks`
+  } 
+  
+  if (pathname.indexOf('playlist') > -1 && !pathname.includes('playlists')){
+    playlistId = pathname.split('/')[2];
+    requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`
+
   }
-    return makeXhrRequest('GET', requestUrl, token)
+  return makeXhrRequest('GET', requestUrl, token)
     .then((data) => {
       let parsedData = JSON.parse(data)
       let hrefArr = parsedData.items.map(item => {

@@ -5,7 +5,7 @@ chrome.runtime.onInstalled.addListener(function(){
     })
   })
 })
-const redirectUri = 'redacted'
+const redirectUri = 'https://$CHROME_TOKEN.chromiumapp.org/success'
 
 function makeXhrPostRequest(code, grantType, refreshToken){
   return new Promise((resolve, reject) => {
@@ -16,10 +16,11 @@ function makeXhrPostRequest(code, grantType, refreshToken){
       if (xhr.status >= 200 && xhr.status < 300){
           return resolve(xhr.response);
       } else {
-        reject(Error({
+        reject(Error(JSON.stringify({
           status: xhr.status,
           statusTextInElse: xhr.statusText
-        }))
+        })
+        ))
       }
     }
     xhr.onerror = function(){
@@ -29,7 +30,7 @@ function makeXhrPostRequest(code, grantType, refreshToken){
       }))
     }
 
-     let requestBody = (refreshToken) ? 'grant_type=' + grantType + '&refresh_token=' + refreshToken + '&client_id=redacted&client_secret=' : 'grant_type=' + grantType + '&code=' + code + '&redirect_uri=' + redirectUri + '&client_id=redacted&client_secret=redacted'
+     let requestBody = (refreshToken) ? 'grant_type=' + grantType + '&refresh_token=' + refreshToken + '&client_id=$SPOTIFY_CLIENT_ID&client_secret=$SPOTIFY_CLIENT_SECRET' : 'grant_type=' + grantType + '&code=' + code + '&redirect_uri=' + redirectUri + '&client_id=$SPOTIFY_CLIENT_ID&client_secret=$SPOTIFY_CLIENT_SECRET'
     xhr.send(requestBody)
   })
 }
@@ -38,9 +39,9 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
   if (request.action === 'launchOauth'){
     chrome.identity.launchWebAuthFlow({
       url: 'https://accounts.spotify.com/authorize' +
-      '?client_id=redacted' +
+      '?client_id=$SPOTIFY_CLIENT_ID' +
       '&response_type=code' +
-      '&redirect_uri=redacted',
+      '&redirect_uri=https://<put chrome token here>.chromiumapp.org/success',
       interactive: true
     },
     function(redirectUrl) {

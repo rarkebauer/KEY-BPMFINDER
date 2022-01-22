@@ -6,12 +6,11 @@ chrome.runtime.onInstalled.addListener(function(){
   })
 })
 const redirectUri = 'https://$CHROME_TOKEN.chromiumapp.org/success'
-const clientId = 'your-api-client-id';
-const clientSecret = 'your-api-client-secret';
 
-function makeXhrPostRequest(code, grantType, refreshToken){
+function makeXhrPostRequest(code, grantType, clientId, clientSecret){
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
+    let refreshToken = '';
     xhr.open('POST', 'https://accounts.spotify.com/api/token', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
     xhr.setRequestHeader('Authorization', 'Basic ' + btoa(clientId + ':' + clientSecret))
@@ -53,7 +52,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
       let code = redirectUrl.slice(redirectUrl.indexOf('=') + 1)
 */
 
-      makeXhrPostRequest(null, 'client_credentials')
+      makeXhrPostRequest(null, 'client_credentials', request.clientId, request.clientSecret)
         .then(data => {
           data = JSON.parse(data)
           // {"access_token":"tokentokentoken","token_type":"Bearer","expires_in":3600}

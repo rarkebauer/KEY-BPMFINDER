@@ -1,3 +1,6 @@
+// Original author Rachel Arkebauer, 2018-2019
+// Adapted by Alexandre Hamelin, 2022
+
 chrome.runtime.onInstalled.addListener(function(){
   chrome.storage.local.set({status: 0}, function(innerObj){
     chrome.storage.local.get(['status'], function(storageObj){

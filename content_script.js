@@ -224,6 +224,12 @@ chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     // this is called whenever a spotify tab is updated (message sent from eventPage.js)
 
+    // start anew everytime the page reloads
+    currentReleaseDates = currentAudioFeatData = null;
+
+    // avoid handling pages other than albums and playlists for now
+    if (!getPathname().match(/^\/(?:album|playlist)\//)) return true;
+
     let userAccessToken = findUserAccessToken();
     makeXhrRequestForAlbumOrPlaylist(getPathname(), request.token, userAccessToken);
     if (!documentObserver) {

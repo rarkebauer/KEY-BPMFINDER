@@ -41,6 +41,9 @@ function makeXhrPostRequest(code, grantType, clientId, clientSecret){
   })
 }
 
+var currentToken = null; // updated whenever we reauthenticate
+var initialized = false;
+
 chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
   if (request.action === 'launchOauth'){
 /*
@@ -60,13 +63,16 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
           data = JSON.parse(data)
           // {"access_token":"tokentokentoken","token_type":"Bearer","expires_in":3600}
           console.log(`here is your access_token: ${data.access_token} expiring at ${new Date(Date.now()+data.expires_in*1000)}`);
+          currentToken = data.access_token;
+          if (initialized) return;
+          initialized = true;
           chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab){
             if (
               changeInfo.status === 'complete' && tab.url.indexOf('spotify') > -1
             || changeInfo.status === 'complete' && tab.url.indexOf('spotify') > -1 && tab.url.indexOf('user') > -1 && tab.url.indexOf('playlists') === -1
           ) {
               chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
-                  chrome.tabs.sendMessage(tabs[0].id, {token: data.access_token}, function(response) {
+                  chrome.tabs.sendMessage(tabs[0].id, {token: currentToken}, function(response) {
                     console.log('response is ', response)
                   });
               })

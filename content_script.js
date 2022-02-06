@@ -133,6 +133,22 @@ function makeXhrRequestForAlbumOrPlaylist(pathname, token, accountToken) {
           //console.log(`retrieved audio feats for ${currentAudioFeatData.audio_features.length} tracks`);
         });
     })
+    .then(() => {
+      // handle the case when the html nodes are already added to the document
+      // due to slow requests to /audio-features
+      for (let i = 0; i < currentAudioFeatData.audio_features.length; i++) { 
+        const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
+        let titleNode = null;
+        if (getPathname().startsWith('/playlist/')) {
+          titleNode = document.querySelector(`[data-testid="playlist-tracklist"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
+        }
+        else if (getPathname().startsWith('/album/')) {
+          titleNode = document.querySelector(`[data-testid="track-list"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
+        }
+        if (titleNode)
+          addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[i], currentReleaseDates[i]);
+      }
+    })
     .catch(err => {
       console.error('AHHHHH', err);
       currentAudioFeatData = null; // invalidate the data we had

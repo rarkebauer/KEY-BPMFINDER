@@ -198,6 +198,12 @@ function installObserver() {
         //console.log(newNode);
 
         if (getPathname().startsWith('/playlist/')) {
+          // Adjust columns width
+          document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
+            elem.style.gridTemplateColumns =
+              '[index] 16px [first] 12fr [var1] 4fr [var2] 1fr [last] minmax(120px,1fr)'
+          });
+
           // must be part of the playlist, not the recommended songs, etc.
           const tracklistNode = document.querySelector('[data-testid="playlist-tracklist"]');
           if (!tracklistNode.contains(newNode)) return;

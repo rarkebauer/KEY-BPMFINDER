@@ -80,7 +80,7 @@ function makeXhrRequest(method, url, token) {
 
 
 function makeXhrRequestForAlbumOrPlaylist(pathname, token, accountToken) {
-  let albumId, requestUrl, playlistId;
+  let albumId, requestUrl, playlistId, limit;
   
   // load the audio features (key, key mode, tempo) for ALL tracks of this playlist/album
   // - get /playlists/$id/tracks?fields=total, then .total (TODO)

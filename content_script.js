@@ -35,11 +35,6 @@ function addSongInfoToTitle(titleNode, songData, releaseDate) {
   }
 }
 
-function getPathname(){
-  const pathname = window.location.pathname
-  return pathname;
-}
-
 function makeXhrRequest(method, url, token) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
@@ -79,8 +74,9 @@ function makeXhrRequest(method, url, token) {
 }
 
 
-function makeXhrRequestForAlbumOrPlaylist(pathname, token, accountToken) {
+function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
   let albumId, requestUrl, playlistId, limit;
+  const pathname = window.location.pathname;
   
   // load the audio features (key, key mode, tempo) for ALL tracks of this playlist/album
   // - get /playlists/$id/tracks?fields=total, then .total (TODO)
@@ -145,10 +141,10 @@ function makeXhrRequestForAlbumOrPlaylist(pathname, token, accountToken) {
       for (let i = 0; i < currentAudioFeatData.audio_features.length; i++) { 
         const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
         let titleNode = null;
-        if (getPathname().startsWith('/playlist/')) {
+        if (pathname.startsWith('/playlist/')) {
           titleNode = document.querySelector(`[data-testid="playlist-tracklist"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
         }
-        else if (getPathname().startsWith('/album/')) {
+        else if (pathname.startsWith('/album/')) {
           titleNode = document.querySelector(`[data-testid="track-list"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
         }
         if (titleNode)
@@ -197,7 +193,7 @@ function installObserver() {
       if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
         //console.log(newNode);
 
-        if (getPathname().startsWith('/playlist/')) {
+        if (window.location.pathname.startsWith('/playlist/')) {
           // Adjust columns width
           document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
             elem.style.gridTemplateColumns =
@@ -208,7 +204,7 @@ function installObserver() {
           const tracklistNode = document.querySelector('[data-testid="playlist-tracklist"]');
           if (!tracklistNode.contains(newNode)) return;
         }
-        else if (getPathname().startsWith('/album/')) {
+        else if (window.location.pathname.startsWith('/album/')) {
           const tracklistNode = document.querySelector('[data-testid="track-list"]');
         }
         // TODO: handle other kinds of pages here...
@@ -256,10 +252,10 @@ chrome.runtime.onMessage.addListener(
     currentReleaseDates = currentAudioFeatData = null;
 
     // avoid handling pages other than albums and playlists for now
-    if (!getPathname().match(/^\/(?:album|playlist)\//)) return true;
+    if (!window.location.pathname.match(/^\/(?:album|playlist)\//)) return true;
 
     let userAccessToken = findUserAccessToken();
-    makeXhrRequestForAlbumOrPlaylist(getPathname(), request.token, userAccessToken);
+    makeXhrRequestForAlbumOrPlaylist(request.token, userAccessToken);
     if (!documentObserver) {
       //console.log('Page has been reloaded, reinstalling the DOM observer');
       documentObserver = installObserver();

@@ -23,10 +23,16 @@ function addSongInfoToTitle(titleNode, songData, releaseDate) {
     'B'
   ]
 
-  const keyMode = (songData.mode === 1) ? 'maj' : 'min';
-  titleNode.innerHTML += ` <span style="color:darkorange">${pitchClass[songData.key]}` +
-    ` ${keyMode} — ${songData.tempo.toFixed(0)} BPM</span>` +
-    ` <span style="color:firebrick">${releaseDate}</span>`;
+  if (songData) {
+    const keyMode = (songData.mode === 1) ? 'maj' : 'min';
+    titleNode.innerHTML += ` <span style="color:darkorange">${pitchClass[songData.key]}` +
+      ` ${keyMode} — ${songData.tempo.toFixed(0)} BPM</span>` +
+      ` <span style="color:firebrick">${releaseDate}</span>`;
+  }
+  else {
+    // sometimes audio-features return no data for certain songs
+    titleNode.innerHTML += ' <span style="color:darkorange">(No data)</span>';
+  }
 }
 
 function getPathname(){

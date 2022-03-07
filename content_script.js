@@ -40,7 +40,7 @@ function makeXhrRequest(method, url, token) {
     let xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     xhr.setRequestHeader('Authorization', 'Bearer ' + token)
-    //console.log(`from makeXhrRequest: ${method} ${url} ${token.substring(0,16)+"..."}`);
+    console.debug(`from makeXhrRequest: ${method} ${url} ${token.substring(0,16)+"..."}`);
     xhr.onload = function(){
       if (xhr.status >= 200 && xhr.status < 300){
         return resolve(xhr.response);
@@ -116,14 +116,14 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
     // the tracks are not in the same order (!)
     return makeXhrRequest('GET', requestUrl, accountToken).then((tracksData) => {
       tracksData = JSON.parse(tracksData);
-      const songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? t.track.id : t.id).join(',');
-      currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? t.track.album.release_date : '');
+      const songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.id : 'no-id') : t.id).join(',');
+      currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.album.release_date : 'no-album') : '');
       return songIdArr;
     })
     .then(songIdArr => {
       // build the audio-features URL based on those IDs
       const audioFeatUrl = 'https://api.spotify.com/v1/audio-features?ids=' + songIdArr;
-      //console.log('built audiofeat url = ' + audioFeatUrl);
+      console.debug('built audiofeat url = ' + audioFeatUrl);
 
       // finally, fetch the data we need for those tracks and expectedly
       // use the API access token because /audio-features requires this
@@ -132,7 +132,7 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
         .then(audioFeatData => {
           // at last, ultimately set global variable for the observer to consume
           currentAudioFeatData = JSON.parse(audioFeatData);
-          //console.log(`retrieved audio feats for ${currentAudioFeatData.audio_features.length} tracks`);
+          console.debug(`retrieved audio feats for ${currentAudioFeatData.audio_features.length} tracks`);
         });
     })
     .then(() => {
@@ -183,7 +183,7 @@ function installObserver() {
     if (!currentAudioFeatData || !currentAudioFeatData.audio_features) return;
 
     mutations.filter(m => m.addedNodes.length > 0).forEach(m => {
-      //console.log('number of nodes added: ' + m.addedNodes.length);
+      console.debug('number of nodes added: ' + m.addedNodes.length);
 
       // Filter mutations on node additions only and check that they're
       // HTML elements with a 'role' attribute set to 'row': these are
@@ -191,7 +191,7 @@ function installObserver() {
 
       const newNode = m.addedNodes[0];
       if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
-        //console.log(newNode);
+        console.debug(newNode);
 
         if (window.location.pathname.startsWith('/playlist/')) {
           // Adjust columns width
@@ -224,8 +224,8 @@ function installObserver() {
         const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
         const titleNode = newNode.querySelector(`:scope .${songTitleClassName}`);
         const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
-        //console.log(`index=${trackIndex} and title=${titleNode.innerText}`);
-        //console.log(currentAudioFeatData.audio_features[trackIndex]);
+        console.debug(`index=${trackIndex} and title=${titleNode.innerText}`);
+        console.debug(currentAudioFeatData.audio_features[trackIndex]);
         if (trackIndex < currentAudioFeatData.audio_features.length)
           addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[trackIndex], currentReleaseDates[trackIndex]);
       }
@@ -257,12 +257,12 @@ chrome.runtime.onMessage.addListener(
     let userAccessToken = findUserAccessToken();
     makeXhrRequestForAlbumOrPlaylist(request.token, userAccessToken);
     if (!documentObserver) {
-      //console.log('Page has been reloaded, reinstalling the DOM observer');
+      console.debug('Page has been reloaded, reinstalling the DOM observer');
       documentObserver = installObserver();
     }
-    //else {
-    //  console.log('Page navigation event; moving on with current data...');
-    //}
+    else {
+      console.debug('Page navigation event; moving on with current data...');
+    }
     sendResponse('WE GOT THE MESSAGE ');
     return true;
   }

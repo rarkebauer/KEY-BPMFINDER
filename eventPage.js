@@ -4,7 +4,7 @@
 chrome.runtime.onInstalled.addListener(function(){
   chrome.storage.local.set({status: 0}, function(innerObj){
     chrome.storage.local.get(['status'], function(storageObj){
-      console.log('intial status is ', storageObj)
+      console.debug('intial status is ', storageObj)
     })
   })
 })
@@ -62,7 +62,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
         .then(data => {
           data = JSON.parse(data)
           // {"access_token":"tokentokentoken","token_type":"Bearer","expires_in":3600}
-          console.log(`here is your access_token: ${data.access_token} expiring at ${new Date(Date.now()+data.expires_in*1000)}`);
+          console.debug(`here is your access_token: ${data.access_token} expiring at ${new Date(Date.now()+data.expires_in*1000)}`);
           currentToken = data.access_token;
           if (initialized) return;
           initialized = true;
@@ -73,7 +73,7 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
           ) {
               chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
                   chrome.tabs.sendMessage(tabs[0].id, {token: currentToken}, function(response) {
-                    console.log('response is ', response)
+                    console.debug('response is ', response)
                   });
               })
             }

@@ -120,8 +120,8 @@ function makeXhrRequestForAlbumOrPlaylist(pathname, token, accountToken) {
     // the tracks are not in the same order (!)
     return makeXhrRequest('GET', requestUrl, accountToken).then((tracksData) => {
       tracksData = JSON.parse(tracksData);
-      const songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? t.track.id : t.id).join(',');
-      currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? t.track.album.release_date : '');
+      const songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.id : 'no-id') : t.id).join(',');
+      currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.album.release_date : 'no-album') : '');
       return songIdArr;
     })
     .then(songIdArr => {

@@ -142,10 +142,10 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
         const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
         let titleNode = null;
         if (pathname.startsWith('/playlist/')) {
-          titleNode = document.querySelector(`[data-testid="playlist-tracklist"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
+          titleNode = document.querySelector(`[data-testid="playlist-tracklist"] [aria-rowindex="${i+2}"] .${songTitleClassName} div`);
         }
         else if (pathname.startsWith('/album/')) {
-          titleNode = document.querySelector(`[data-testid="track-list"] [aria-rowindex="${i+2}"] .${songTitleClassName}`);
+          titleNode = document.querySelector(`[data-testid="track-list"] [aria-rowindex="${i+2}"] .${songTitleClassName} div`);
         }
         if (titleNode)
           addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[i], currentReleaseDates[i]);
@@ -222,7 +222,7 @@ function installObserver() {
         // ":scope" is needed here to find a descendant of newNode.
         // Adjust index by 2 accounting for 0-based and the table header.
         const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
-        const titleNode = newNode.querySelector(`:scope .${songTitleClassName}`);
+        const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`);
         const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
         console.debug(`index=${trackIndex} and title=${titleNode.innerText}`);
         console.debug(currentAudioFeatData.audio_features[trackIndex]);

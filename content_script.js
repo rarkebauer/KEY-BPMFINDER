@@ -239,7 +239,7 @@ function installObserver() {
 }
 
 function findUserAccessToken() {
-  const configNode = document.querySelector('#config');
+  const configNode = document.querySelector('#session');
   const token = configNode ? JSON.parse(configNode.innerText).accessToken : null;
   return token;
 }

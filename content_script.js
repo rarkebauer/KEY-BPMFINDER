@@ -222,7 +222,8 @@ function installObserver() {
         // ":scope" is needed here to find a descendant of newNode.
         // Adjust index by 2 accounting for 0-based and the table header.
         const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
-        const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`);
+        const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`) ||  // playlist page
+                          newNode.querySelector(`:scope div.${songTitleClassName}`);     // album page
         const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
         console.debug(`index=${trackIndex} and title=${titleNode.innerText}`);
         console.debug(currentAudioFeatData.audio_features[trackIndex]);

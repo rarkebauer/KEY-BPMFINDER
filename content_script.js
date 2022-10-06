@@ -39,8 +39,10 @@ function makeXhrRequest(method, url, token) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token)
-    console.debug(`from makeXhrRequest: ${method} ${url} ${token.substring(0,16)+"..."}`);
+    if (token) {
+      xhr.setRequestHeader('Authorization', 'Bearer ' + token)
+      console.debug(`from makeXhrRequest: ${method} ${url} ${token.substring(0,16)+"..."}`);
+    }
     xhr.onload = function(){
       if (xhr.status >= 200 && xhr.status < 300){
         return resolve(xhr.response);
@@ -191,7 +193,7 @@ function installObserver() {
 
       const newNode = m.addedNodes[0];
       if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
-        console.debug(newNode);
+        console.debug("New song node added to DOM:", newNode);
 
         // Adjust columns width
         document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
@@ -203,6 +205,7 @@ function installObserver() {
                               document.querySelector('[data-testid="track-list"]');
         // must be part of the playlist, not the recommended songs, etc.
         if (!tracklistNode || !tracklistNode.contains(newNode)) return;
+        console.debug(" Song node is valid, appending audio features to song node");
 
         // TODO: handle other kinds of pages here...
         //else if (...) {
@@ -222,8 +225,8 @@ function installObserver() {
         const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`) ||  // playlist page
                           newNode.querySelector(`:scope div.${songTitleClassName}`);     // album page
         const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
-        console.debug(`index=${trackIndex} and title=${titleNode.innerText}`);
-        console.debug(currentAudioFeatData.audio_features[trackIndex]);
+        console.debug(` index=${trackIndex} and title=${titleNode.innerText}`);
+        console.debug("", currentAudioFeatData.audio_features[trackIndex]);
         if (trackIndex < currentAudioFeatData.audio_features.length)
           addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[trackIndex], currentReleaseDates[trackIndex]);
       }
@@ -236,10 +239,34 @@ function installObserver() {
   return observer;
 }
 
+function updateUserAccessToken() {
+  return makeXhrRequest("GET", "/get_access_token?reason=transport&productType=web-player", null).then(tokenData => {
+    document.querySelector('#session').innerHTML = tokenData;
+    console.debug("new session data:", tokenData);
+    return JSON.parse(tokenData).accessToken;
+  })
+  .catch(err_ => {
+    console.error("error fetching new access token");
+  })
+}
+
 function findUserAccessToken() {
-  const configNode = document.querySelector('#session');
-  const token = configNode ? JSON.parse(configNode.innerText).accessToken : null;
-  return token;
+  const sessionNode = document.querySelector('#session');
+  if (!sessionNode) {
+    console.warn("no session config node in page?");
+    return Promise.resolve(null);
+  }
+  let sessionData = JSON.parse(sessionNode.innerText);
+  const expiration = sessionData.accessTokenExpirationTimestampMs;
+  const now = new Date().getTime();
+  if (now < expiration) {
+    console.debug("accesstoken is still valid");
+    return Promise.resolve(sessionData.accessToken);
+  }
+  else {
+    console.debug("accesstoken has expired, updating html node with new session data");
+    return updateUserAccessToken();
+  }
 }
 
 chrome.runtime.onMessage.addListener(
@@ -252,14 +279,18 @@ chrome.runtime.onMessage.addListener(
     // avoid handling pages other than albums and playlists for now
     if (!window.location.pathname.match(/^\/(?:album|playlist)\//)) return true;
 
-    let userAccessToken = findUserAccessToken();
-    makeXhrRequestForAlbumOrPlaylist(request.token, userAccessToken);
+    findUserAccessToken().then(userAccessToken => {
+      makeXhrRequestForAlbumOrPlaylist(request.token, userAccessToken);
+    }).catch(err => {
+      console.error("error while updating user access token", err);
+    });
+
     if (!documentObserver) {
-      console.debug('Page has been reloaded, reinstalling the DOM observer');
+      console.debug('Page has been reloaded, observer is gone, reinstalling the DOM observer');
       documentObserver = installObserver();
     }
     else {
-      console.debug('Page navigation event; moving on with current data...');
+      console.debug('Page navigation event; observer still there, moving on with current data...');
     }
     sendResponse('WE GOT THE MESSAGE ');
     return true;

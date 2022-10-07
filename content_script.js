@@ -48,27 +48,19 @@ function makeXhrRequest(method, url, token) {
         return resolve(xhr.response);
       } else {
         reject(
-          Error(
-            JSON.stringify(
-              {
-                status: xhr.status,
-                statusTextInElse: xhr.statusText
-              }
-            )
-          )
+          Error(`XHR request error: ${xhr.status} ${xhr.statusText}`, {cause: {
+            status: xhr.status,
+            statusTextInElse: xhr.statusText
+          }})
         )
       }
     }
     xhr.onerror = function(){
       reject(
-        Error(
-          JSON.stringify(
-            {
-              status: xhr.status,
-              statusTextInElse: xhr.statusText
-            }
-          )
-        )
+        Error(`XHR request error: ${xhr.status} ${xhr.statusText}`, {cause: {
+          status: xhr.status,
+          statusTextInElse: xhr.statusText
+        }})
       )
     }
     xhr.send()
@@ -135,6 +127,13 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
           // at last, ultimately set global variable for the observer to consume
           currentAudioFeatData = JSON.parse(audioFeatData);
           console.debug(`retrieved audio feats for ${currentAudioFeatData.audio_features.length} tracks`);
+        })
+        .catch(err => {
+          // the query to audio-features may fail because of the token
+          // has expired; notify the user in logs
+          if (err.cause.status == 401)
+            console.error('API authentication token has expired! Re-authenticate manually using the Extension popup page');
+          throw err;
         });
     })
     .then(() => {

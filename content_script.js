@@ -39,10 +39,9 @@ function makeXhrRequest(method, url, token) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
-    if (token) {
+    if (token)
       xhr.setRequestHeader('Authorization', 'Bearer ' + token)
-      console.debug(`from makeXhrRequest: ${method} ${url} ${token.substring(0,16)+"..."}`);
-    }
+    console.debug(`from makeXhrRequest: ${method} ${url} ${token ? token.substring(0,16)+"..." : "(no-token)"}`);
     xhr.onload = function(){
       if (xhr.status >= 200 && xhr.status < 300){
         return resolve(xhr.response);

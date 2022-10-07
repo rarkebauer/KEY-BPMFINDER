@@ -50,7 +50,7 @@ function makeXhrRequest(method, url, token) {
         reject(
           Error(`XHR request error: ${xhr.status} ${xhr.statusText}`, {cause: {
             status: xhr.status,
-            statusTextInElse: xhr.statusText
+            statusText: xhr.statusText
           }})
         )
       }
@@ -59,7 +59,7 @@ function makeXhrRequest(method, url, token) {
       reject(
         Error(`XHR request error: ${xhr.status} ${xhr.statusText}`, {cause: {
           status: xhr.status,
-          statusTextInElse: xhr.statusText
+          statusText: xhr.statusText
         }})
       )
     }

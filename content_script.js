@@ -160,7 +160,7 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
 
 function installObserver() {
   // OK, Spotify adds and removes HTML nodes dynamically everytime the user
-  // scrolls the page up and down, meaning we can't just append th info
+  // scrolls the page up and down, meaning we can't just append the info
   // permanently to the track titles. We need to listen for changes to the DOM
   // and piggyback on those events to display our extra information.
   // That's done by using a MutationObserver object and watching (filtering)
@@ -177,7 +177,7 @@ function installObserver() {
     // in the track listing table displayed on screen (offset by 2). Use
     // that index in the global variables to retrieve the corresponding
     // info for that track. Those variables are set whenever the browser tab
-    // is updated (a refresh or uesr navigation and URL changes).
+    // is updated (a refresh or user navigation and URL changes).
 
     // Don't do anything if something went wrong loading the needed data.
     if (!currentAudioFeatData || !currentAudioFeatData.audio_features) return;

@@ -243,9 +243,6 @@ function updateUserAccessToken() {
     console.debug("new session data:", tokenData);
     return JSON.parse(tokenData).accessToken;
   })
-  .catch(err_ => {
-    console.error("error fetching new access token");
-  })
 }
 
 function findUserAccessToken() {

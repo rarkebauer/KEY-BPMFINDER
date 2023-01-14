@@ -67,11 +67,14 @@ chrome.extension.onMessage.addListener(function(request, sender, sendResponse){
           if (initialized) return;
           initialized = true;
           chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab){
+            console.debug("Received onUpdated event:", changeInfo, tab);
             if (
               changeInfo.status === 'complete' && tab.url.indexOf('spotify') > -1
             || changeInfo.status === 'complete' && tab.url.indexOf('spotify') > -1 && tab.url.indexOf('user') > -1 && tab.url.indexOf('playlists') === -1
           ) {
+              console.debug("querying the active spotify after page loaded");
               chrome.tabs.query({active: true, currentWindow: true}, function(tabs){
+                  console.debug('found active window, sending currentToken to content_script');
                   chrome.tabs.sendMessage(tabs[0].id, {token: currentToken}, function(response) {
                     console.debug('response is ', response)
                   });

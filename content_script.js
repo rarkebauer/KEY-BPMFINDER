@@ -179,6 +179,22 @@ function installObserver() {
     // info for that track. Those variables are set whenever the browser tab
     // is updated (a refresh or user navigation and URL changes).
 
+    // When navigating normally in the web player (i.e. to another playlist or album),
+    // the tab onUpdated() event handler is not always triggered, or can be triggered later.
+    // As such, we need a way to know when to reset the audio feature data array.
+    // To do this, we check when the application removes the main content view
+    // (check for sectin[role='presentation']).
+    mutations.filter(m => m.removedNodes.length > 0).forEach(m => {
+      m.removedNodes.forEach(node => {
+        if (node.nodeType == Node.ELEMENT_NODE) {
+          if (node.querySelector('section[role="presentation"]') != null) {
+            //console.debug('the playlist/album page has been changed; resetting audio feature data arrays');
+            currentReleaseDates = currentAudioFeatData = null;
+          }
+        }
+      })
+    });
+
     // Don't do anything if something went wrong loading the needed data.
     if (!currentAudioFeatData || !currentAudioFeatData.audio_features) return;
 
@@ -189,45 +205,47 @@ function installObserver() {
       // HTML elements with a 'role' attribute set to 'row': these are
       // the ones corresponding to the tracks displayed.
 
-      const newNode = m.addedNodes[0];
-      if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
-        console.debug("New song node added to DOM:", newNode);
+      //const newNode = m.addedNodes[0];
+      m.addedNodes.forEach((newNode) => {
+        if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
+          console.debug("Potentially new song node added to DOM:", newNode);
 
-        // Adjust columns width
-        document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
-          elem.style.gridTemplateColumns =
-            '[index] 16px [first] 12fr [var1] 4fr [var2] 1fr [last] minmax(120px,1fr)'
-        });
+          // Adjust columns width
+          document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
+            elem.style.gridTemplateColumns =
+              '[index] 16px [first] 12fr [var1] 4fr [var2] 1fr [last] minmax(120px,1fr)'
+          });
 
-        const tracklistNode = document.querySelector('[data-testid="playlist-tracklist"]') ||
-                              document.querySelector('[data-testid="track-list"]');
-        // must be part of the playlist, not the recommended songs, etc.
-        if (!tracklistNode || !tracklistNode.contains(newNode)) return;
-        console.debug(" Song node is valid, appending audio features to song node");
+          const tracklistNode = document.querySelector('[data-testid="playlist-tracklist"]') ||
+                                document.querySelector('[data-testid="track-list"]');
+          // must be part of the playlist, not the recommended songs, etc.
+          if (!tracklistNode || !tracklistNode.contains(newNode)) return;
+          console.debug(" Song node is valid, appending audio features to song node");
 
-        // TODO: handle other kinds of pages here...
-        //else if (...) {
-        // TODO: /queue (api /tracks?ids=$id with user account token)
-        // TODO: /artist/$id (api-partner /query?operationName=queryArtistOverview)
-        // TODO: /artist/$id/discography/single (api-partner /query?operationName={queryArtistDiscographySingles,queryAlbumTracks})
-        // TODO: /search/$terms (api-partner /query?operationName=searchDesktop)
-        // TODO: /search/$terms/tracks (api-partner /query?operationName=searchTracks)
-        // TODO: recommanded songs (playlist extended /extenderp)
-        //}
+          // TODO: handle other kinds of pages here...
+          //else if (...) {
+          // TODO: /queue (api /tracks?ids=$id with user account token)
+          // TODO: /artist/$id (api-partner /query?operationName=queryArtistOverview)
+          // TODO: /artist/$id/discography/single (api-partner /query?operationName={queryArtistDiscographySingles,queryAlbumTracks})
+          // TODO: /search/$terms (api-partner /query?operationName=searchDesktop)
+          // TODO: /search/$terms/tracks (api-partner /query?operationName=searchTracks)
+          // TODO: recommanded songs (playlist extended /extenderp)
+          //}
 
-        // For now, use this hardcoded class name which is set on all title nodes
-        // (probably changes every new version deployed of the web player).
-        // ":scope" is needed here to find a descendant of newNode.
-        // Adjust index by 2 accounting for 0-based and the table header.
-        const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
-        const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`) ||  // playlist page
-                          newNode.querySelector(`:scope div.${songTitleClassName}`);     // album page
-        const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
-        console.debug(` index=${trackIndex} and title=${titleNode.innerText}`);
-        console.debug("", currentAudioFeatData.audio_features[trackIndex]);
-        if (trackIndex < currentAudioFeatData.audio_features.length)
-          addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[trackIndex], currentReleaseDates[trackIndex]);
-      }
+          // For now, use this hardcoded class name which is set on all title nodes
+          // (probably changes every new version deployed of the web player).
+          // ":scope" is needed here to find a descendant of newNode.
+          // Adjust index by 2 accounting for 0-based and the table header.
+          const songTitleClassName = 't_yrXoUO3qGsJS4Y6iXX';
+          const titleNode = newNode.querySelector(`:scope .${songTitleClassName} div`) ||  // playlist page
+                            newNode.querySelector(`:scope div.${songTitleClassName}`);     // album page
+          const trackIndex = parseInt(newNode.getAttribute('aria-rowindex')) - 2;
+          console.debug(` index=${trackIndex} and title=${titleNode.innerText}`);
+          console.debug("", currentAudioFeatData.audio_features[trackIndex]);
+          if (trackIndex < currentAudioFeatData.audio_features.length)
+            addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[trackIndex], currentReleaseDates[trackIndex]);
+        }
+      })
     });
   });
   observer.observe(document.body, {

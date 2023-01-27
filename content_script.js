@@ -126,7 +126,7 @@ async function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
 
     // send the request; use the account access token because otherwise
     // the tracks are not in the same order (!)
-    return makeXhrRequest('GET', requestUrl, accountToken, userLang).then(tracksData => {
+    return makeXhrRequest('GET', requestUrl, accountToken, userLang).then(async (tracksData) => {
       tracksData = JSON.parse(tracksData);
       let songIdArr;
       if (tracksData.hasOwnProperty('data')) {
@@ -136,9 +136,9 @@ async function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
         const items = tracksData.data.playlistV2.content.items;
         songIdArr = items.map(itm => itm.item.data.uri.split(':')[2]);
         const albumInfoUrl = 'https://api.spotify.com/v1/tracks?ids=' + songIdArr.slice(0, 50).join(',');
-        makeXhrRequest('GET', albumInfoUrl, token).then(data => {
-          currentReleaseDates = JSON.parse(data).tracks.map(t => t.album.release_date);
-        });
+        // use async/await here to wait for the promise to resolve
+        const data = await makeXhrRequest('GET', albumInfoUrl, token);
+        currentReleaseDates = JSON.parse(data).tracks.map(t => t.album.release_date);
       }
       else {
         // normal user playlist page, or an album page

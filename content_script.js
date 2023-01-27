@@ -1,5 +1,5 @@
 // Original author Rachel Arkebauer, 2018-2019
-// Adapted by Alexandre Hamelin, 2022
+// Adapted by Alexandre Hamelin, 2022-2023
 
 // Globals for the life span of the page (they reset to null on page refresh)
 var documentObserver = null;
@@ -35,12 +35,14 @@ function addSongInfoToTitle(titleNode, songData, releaseDate) {
   }
 }
 
-function makeXhrRequest(method, url, token) {
+function makeXhrRequest(method, url, token, lang=null) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
     if (token)
       xhr.setRequestHeader('Authorization', 'Bearer ' + token)
+    if (lang)
+      xhr.setRequestHeader('Accept-Language', lang);
     console.debug(`from makeXhrRequest: ${method} ${url} ${token ? token.substring(0,16)+"..." : "(no-token)"}`);
     xhr.onload = function(){
       if (xhr.status >= 200 && xhr.status < 300){
@@ -67,8 +69,8 @@ function makeXhrRequest(method, url, token) {
 }
 
 
-function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
-  let albumId, requestUrl, playlistId, limit;
+async function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
+  let requestUrl, limit;
   const pathname = window.location.pathname;
   
   // load the audio features (key, key mode, tempo) for ALL tracks of this playlist/album
@@ -82,15 +84,32 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
   //   which the observer can easily use afterwards
 
   if (pathname.indexOf('album') > -1 && !pathname.includes('albums')){
-    albumId = pathname.slice(7) //grab albumId
+    const albumId = pathname.slice(7) //grab albumId
     requestUrl = `https://api.spotify.com/v1/albums/${albumId}/tracks`
     limit = 50;
   }
   
   if (pathname.indexOf('playlist') > -1 && !pathname.includes('playlists')){
-    playlistId = pathname.split('/')[2];
-    requestUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks?fields=total,items.track.id,items.track.album.release_date`
+    // Let's first determine if we're on a user playlist page or not.
+    //
+    // The playlist meta info URL is actually the same as the playlist URL
+    // itself, but we request 0 song from that playlist. We need to do this
+    // first to know if we're going to retrieve the songs from that
+    // URL (api-partner) or from the normal API URL; the list of songs won't
+    // be the same!
+    const playlistId = pathname.split('/')[2];
+    var userLang = window.navigator.language || 'en';
+    userLang = userLang.split('-')[0];
+
+    const playlistMetaInfoUrl = `https://api-partner.spotify.com/pathfinder/v1/query?operationName=fetchPlaylist&variables=%7B%22uri%22%3A%22spotify%3Aplaylist%3A${playlistId}%22%2C%22offset%22%3A0%2C%22limit%22%3A${0}%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e578eda4f77aae54294a48eac85e2a42ddb203faf6ea12b3fddaec5aa32918a3%22%7D%7D`
+    const playlistInfo = JSON.parse(await makeXhrRequest('GET', playlistMetaInfoUrl, accountToken));
+    const isUserPlaylist = playlistInfo.data.playlistV2.format === '' &&
+                           playlistInfo.data.playlistV2.ownerV2.data.uri != 'spotify:user:spotify';
+
     limit = 100;
+    requestUrl = isUserPlaylist
+      ? `https://api.spotify.com/v1/playlists/${playlistId}/tracks?fields=total,items.track.id,items.track.album.release_date`
+      : `https://api-partner.spotify.com/pathfinder/v1/query?operationName=fetchPlaylist&variables=%7B%22uri%22%3A%22spotify%3Aplaylist%3A${playlistId}%22%2C%22offset%22%3A0%2C%22limit%22%3A${limit}%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22e578eda4f77aae54294a48eac85e2a42ddb203faf6ea12b3fddaec5aa32918a3%22%7D%7D`;
   }
 
   // split the total number of tracks into chunks of ${limit}
@@ -107,15 +126,30 @@ function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
 
     // send the request; use the account access token because otherwise
     // the tracks are not in the same order (!)
-    return makeXhrRequest('GET', requestUrl, accountToken).then((tracksData) => {
+    return makeXhrRequest('GET', requestUrl, accountToken, userLang).then(tracksData => {
       tracksData = JSON.parse(tracksData);
-      const songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.id : 'no-id') : t.id).join(',');
-      currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.album.release_date : 'no-album') : '');
+      let songIdArr;
+      if (tracksData.hasOwnProperty('data')) {
+        // special playlist page by spotify where we can't call
+        // the Get Playlist ItemsAPI API normally, so go
+        // retrieve all release date of songs in a playlist
+        const items = tracksData.data.playlistV2.content.items;
+        songIdArr = items.map(itm => itm.item.data.uri.split(':')[2]);
+        const albumInfoUrl = 'https://api.spotify.com/v1/tracks?ids=' + songIdArr.slice(0, 50).join(',');
+        makeXhrRequest('GET', albumInfoUrl, token).then(data => {
+          currentReleaseDates = JSON.parse(data).tracks.map(t => t.album.release_date);
+        });
+      }
+      else {
+        // normal user playlist page, or an album page
+        songIdArr = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.id : 'no-id') : t.id);
+        currentReleaseDates = tracksData.items.map(t => t.hasOwnProperty('track') ? (t.track !== null ? t.track.album.release_date : 'no-album') : '');
+      }
       return songIdArr;
     })
     .then(songIdArr => {
       // build the audio-features URL based on those IDs
-      const audioFeatUrl = 'https://api.spotify.com/v1/audio-features?ids=' + songIdArr;
+      const audioFeatUrl = 'https://api.spotify.com/v1/audio-features?ids=' + songIdArr.join(',');
       console.debug('built audiofeat url = ' + audioFeatUrl);
 
       // finally, fetch the data we need for those tracks and expectedly

@@ -5,12 +5,22 @@
     <link rel="stylesheet" type="text/css" href="popup.css">
   </head>
 
-  <body style="width:200px;">
+  <body style="width:45em">
     <div id="all">
       <h1>Key &amp; BPM Finder</h1>
+        <p>Hi and thank you for trying this extension! To use this extension
+          you need two bits of information that can be found on Spotify's
+          <a href="https://developer.spotify.com/dashboard/">developer portal</a>.
+          (Spotify's requirements, not ours.) Once you've logged in, create an
+          app then copy its <em>Client ID</em> and <em>Secret</em> below.
+        </p>
         <ol>
-          <li><button id="authBtn">Launch</button></li>
-          <li>Connect with Spotify</li>
+          <li>Enter your API information below:
+            <div>
+              <label>Your Spotify API Client ID:<input id="client_id"></label>
+              <label>Your Spotify API Client Secret:<input id="client_secret"></label>
+            </div>
+          <li><button id="authBtn">Click here to activate</button></li>
           <li>Head to Spotify's site or refresh the page and start searching!</li>
         </ol>
 

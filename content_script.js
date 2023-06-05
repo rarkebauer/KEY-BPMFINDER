@@ -179,6 +179,7 @@ async function makeXhrRequestForAlbumOrPlaylist(token, accountToken) {
         if (titleNode)
           addSongInfoToTitle(titleNode, currentAudioFeatData.audio_features[i], currentReleaseDates[i]);
       }
+      adjustColumnsWidth();
     })
     .catch(err => {
       console.error('AHHHHH', err);
@@ -239,11 +240,7 @@ function installObserver() {
         if (newNode.nodeType == Node.ELEMENT_NODE && newNode.getAttribute('role') == 'row') {
           console.debug("Potentially new song node added to DOM:", newNode);
 
-          // Adjust columns width
-          document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
-            elem.style.gridTemplateColumns =
-              '[index] 16px [first] 12fr [var1] 4fr [var2] 1fr [last] minmax(120px,1fr)'
-          });
+          adjustColumnsWidth();
 
           const tracklistNode = document.querySelector('[data-testid="playlist-tracklist"]') ||
                                 document.querySelector('[data-testid="track-list"]');
@@ -282,6 +279,13 @@ function installObserver() {
     subtree: true
   });
   return observer;
+}
+
+function adjustColumnsWidth() {
+  document.querySelectorAll('[aria-colcount="5"] .wTUruPetkKdWAR1dd6w4').forEach(elem => {
+    elem.style.gridTemplateColumns =
+      '[index] 16px [first] 12fr [var1] 4fr [var2] 1fr [last] minmax(120px,1fr)'
+  });
 }
 
 function updateUserAccessToken() {
